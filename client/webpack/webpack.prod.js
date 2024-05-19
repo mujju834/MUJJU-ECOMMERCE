@@ -6,20 +6,19 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const WebpackPwaManifest = require('webpack-pwa-manifest');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const webpackMerge = require('webpack-merge');
 
 const common = require('./webpack.common');
 
 const CURRENT_WORKING_DIR = process.cwd();
 const NODE_ENV = process.env.NODE_ENV || 'production';
-const API_URL = process.env.REACT_APP_API_URL || 'https://mujju-ecommerce.onrender.com/api';
+const API_URL = process.env.REACT_APP_API_URL;
 
 const config = {
   mode: 'production',
   output: {
     path: path.join(CURRENT_WORKING_DIR, '/dist'),
-    filename: 'js/[name].[contenthash].js',
+    filename: 'js/[name].[hash].js',
     publicPath: '/'
   },
   module: {
@@ -28,16 +27,18 @@ const config = {
         test: /\.(scss|sass|css)$/,
         use: [
           MiniCssExtractPlugin.loader,
-          'css-loader',
+          {
+            loader: 'css-loader'
+          },
           {
             loader: 'postcss-loader',
             options: {
-              postcssOptions: {
-                config: path.resolve(__dirname, '../postcss.config.js'),
-              },
-            },
+              plugins: () => [require('cssnano'), require('autoprefixer')]
+            }
           },
-          'sass-loader'
+          {
+            loader: 'sass-loader'
+          }
         ]
       },
       {
@@ -48,7 +49,7 @@ const config = {
             options: {
               outputPath: 'images',
               publicPath: '../images',
-              name: '[name].[contenthash].[ext]'
+              name: '[name].[hash].[ext]'
             }
           }
         ]
@@ -61,7 +62,7 @@ const config = {
             options: {
               outputPath: 'fonts',
               publicPath: '../fonts',
-              name: '[name].[contenthash].[ext]'
+              name: '[name].[hash].[ext]'
             }
           }
         ]
@@ -108,19 +109,10 @@ const config = {
             ascii_only: true
           }
         }
-      }),
-      new OptimizeCssAssetsPlugin({
-        assetNameRegExp: /\.css$/g,
-        cssProcessor: require('cssnano'),
-        cssProcessorPluginOptions: {
-          preset: ['default', { discardComments: { removeAll: true } }]
-        },
-        canPrint: true
       })
     ]
   },
   plugins: [
-    new CleanWebpackPlugin(),
     new webpack.DefinePlugin({
       'process.env': {
         NODE_ENV: JSON.stringify(NODE_ENV),
@@ -144,8 +136,7 @@ const config = {
       }
     }),
     new MiniCssExtractPlugin({
-      filename: 'css/[name].[contenthash].css',
-      chunkFilename: 'css/[id].[contenthash].css'
+      filename: 'css/[name].[hash].css'
     }),
     new WebpackPwaManifest({
       name: 'MERN Store',
@@ -168,18 +159,16 @@ const config = {
           ios: true
         }
       ]
+    }),
+    new OptimizeCssAssetsPlugin({
+      assetNameRegExp: /\.css$/g,
+      cssProcessor: require('cssnano'),
+      cssProcessorPluginOptions: {
+        preset: ['default', { discardComments: { removeAll: true } }]
+      },
+      canPrint: true
     })
-  ],
-  stats: {
-    assets: true,
-    modules: false,
-    children: false, // Prevent output for child compilations
-    entrypoints: false,
-    chunkModules: false,
-    warnings: false,
-    version: false,
-    timings: true,
-  }
+  ]
 };
 
 module.exports = webpackMerge(common, config);
