@@ -11,8 +11,8 @@ const webpackMerge = require('webpack-merge');
 const common = require('./webpack.common');
 
 const CURRENT_WORKING_DIR = process.cwd();
-const NODE_ENV = process.env.NODE_ENV;
-const API_URL = process.env.API_URL;
+const NODE_ENV = process.env.NODE_ENV || 'production';
+const API_URL = process.env.REACT_APP_API_URL;
 
 const config = {
   mode: 'production',
